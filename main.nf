@@ -1,107 +1,95 @@
 #!/usr/bin/env nextflow
 /*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     nf-core/atacco
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/atacco
-    Website: https://nf-co.re/atacco
-    Slack  : https://nfcore.slack.com/channels/atacco
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Github : 
+    Contact: Yuan.li@nbis.se
 ----------------------------------------------------------------------------------------
 */
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+nextflow.enable.dsl=2
 
-include { ATACCO  } from './workflows/atacco'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_atacco_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_atacco_pipeline'
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_atacco_pipeline'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    GENOME PARAMETER VALUES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-// TODO nf-core: Remove this line if you don't need a FASTA file
-//   This is an example of how to use getGenomeAttribute() to fetch parameters
-//   from igenomes.config using `--genome`
-params.fasta = getGenomeAttribute('fasta')
+println """\
+         ATACCO   P I P E L I N E
+         ===================================
+         GitHub: 
+         ___________________________________
+         SAMPLE SHEET   : ${params.sampleSheet}
+         OUTPUT DIR     : ${params.outdir}
+        ___________________________________
+         """
+         .stripIndent()
 
 /*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    NAMED WORKFLOWS FOR PIPELINE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//
-// WORKFLOW: Run main analysis pipeline depending on type of input
-//
-workflow NFCORE_ATACCO {
+include { GET_BEGRAPH2  } from './subworkflows/BEDGRAPH.nf'
+include { TRACKPLOT2 } from './subworkflows/TRACK_VISUALIZATION.nf'
 
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
-    main:
-
-    //
-    // WORKFLOW: Run pipeline
-    //
-    ATACCO (
-        samplesheet
-    )
-    emit:
-    multiqc_report = ATACCO.out.multiqc_report // channel: /path/to/multiqc_report.html
+if (params.sampleSheet) {
+    ch_input = Channel
+        .fromPath(params.sampleSheet)
+        .splitCsv(header: true, sep: ',')
+        .map { row -> tuple(file(row.file),file(row.bai),row.group) }
+} else if (params.file) {
+    ch_input = Channel
+        .fromPath(params.file)
+        .map { f -> tuple(file(f), 'default_group') }
+} else {
+    error "Please provide either --sampleSheet or --file"
 }
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    RUN MAIN WORKFLOW
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
 
 workflow {
+    if( params.bedgraphFiles ) {
+        // Case 1: user provides bedgraph files
+       println "bedgraphFiles param: ${params.bedgraphFiles}"
+       // bedgraphs_input = Channel.from(params.bedgraphFiles.split(',')).map { it.toString() }.collect().map { it.join(' ') }
+       bedgraphs_input = Channel.from(params.bedgraphFiles)
+       bedgraphs_input.view()
+    } else {
+        // Case 2: generate bedgraphs from BAMs via GET_BEGRAPH2
+        file_input = ch_input.map { it[0] }
+        bai_input  = ch_input.map { it[1] }
 
-    main:
-    //
-    // SUBWORKFLOW: Run initialisation tasks
-    //
-    PIPELINE_INITIALISATION (
-        params.version,
-        params.validate_params,
-        params.monochrome_logs,
-        args,
-        params.outdir,
-        params.input,
-        params.help,
-        params.help_full,
-        params.show_hidden
-    )
+        def bg = GET_BEGRAPH2(file_input, bai_input)
+        // Collect into one list channel
+        // To do, this may need to be tested
+        bedgraphs_input = bg.bedgraph_output
+                            .map { it.toString() }      // convert each file to path string
+                            .collect()                  // gather all emitted paths into a List
+                            .map { it.join(',') }       // join the list with commas
+        bedgraphs_input.view()
+    }
 
-    //
-    // WORKFLOW: Run main workflow
-    //
-    NFCORE_ATACCO (
-        PIPELINE_INITIALISATION.out.samplesheet
-    )
-    //
-    // SUBWORKFLOW: Run completion tasks
-    //
-    PIPELINE_COMPLETION (
-        params.email,
-        params.email_on_fail,
-        params.plaintext_email,
-        params.outdir,
-        params.monochrome_logs,
-        params.hook_url,
-        NFCORE_ATACCO.out.multiqc_report
+    // sanity check / required error
+    if( !params.bedgraphFiles && params.nobg ) {
+        error "You must provide --bedgraphFiles when --nobg is set"
+    }
+    peakCallBed_input = Channel.fromPath(params.peakCallBedfile)
+    geneModelGTF_input = Channel.fromPath(params.geneModelGTFfile)
+    trackIniNameSuffix_input = Channel.value(params.trackIniNameSuffix)
+    region_input = Channel.from(params.regions.split(','))
+    // region_input.view()
+    TRACKPLOT2(bedgraphs_input, peakCallBed_input, geneModelGTF_input, trackIniNameSuffix_input, region_input)
+}
+
+workflow.onComplete {
+    println( workflow.success ? """
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        """ : """
+        Failed: ${workflow.errorReport}
+        exit status : ${workflow.exitStatus}
+        """
     )
 }
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    THE END
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
