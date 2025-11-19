@@ -18,3 +18,4 @@ tests/default.nf.test tests/nextflow.config
 .prettierrc.yml
 .prettierignore
 tests/default.nf.test tests/nextflow.config
+tests/
