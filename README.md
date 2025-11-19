@@ -1,6 +1,6 @@
 # nf-atacco
 
-| ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue) | ![Version](https://img.shields.io/badge/Version-1.0.0-green) | [![DOI](https://zenodo.org/badge/964819767.svg)](https://doi.org/10.5281/zenodo.17176897) |
+| ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue) | ![Version](https://img.shields.io/badge/Version-1.0.0-green) |
 |------------------------------------------------------------------|-------------------------------------------------------------|-------------------------------------------------------------|
 
 ### Pipeline Stats
@@ -78,7 +78,7 @@ nextflow run main.nf --project <project id> \
 
 ```
 
-Example regions 'chr1:156591000-156592814;chr1:genrich_9654(NAXE),chr3:51705518-53705890;chr3:genrich_99114(SPCS1).png'
+Example regions 'chr1:156591000-156592814;chr1:genrich_9654(NAXE),chr3:51705518-53705890;chr3:genrich_99114(SPCS1)'
 
 You may customise the pipeline by modifying the `nextflow.config` file or by passing additional parameters in the command line.
 There are some profiles available for different environments:
@@ -155,7 +155,7 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 
 - Built with [Nextflow](https://www.nextflow.io/)
 - Inspired by the [NBIS Epigenomics Workshop repo](https://nbis-workshop-epigenomics.readthedocs.io/en/latest/content/tutorials/atacseq_tutorials.html)
-- Used [addityea/nf-atac](addityea/nf-atac) as a template
+- Used [addityea/nf-atac](https://github.com/addityea/nf-atac.git) as a template
 
 
 
