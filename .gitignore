@@ -11,3 +11,8 @@ conts
 tests/default.nf.test tests/nextflow.config
 .vscode/settings.json
 .github
+.nf-core.yml
+.prettierrc.yml
+.pre-commit-config.yaml
+.gitattributes
+.prettierrc.yml
