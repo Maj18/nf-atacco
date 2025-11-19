@@ -120,7 +120,7 @@ file,group
 ```
 
 #### Optional Flags
-- **`--nobg`**: skip convert bam to bedgraph. *(Default: `false`)*
+- **`--nobg`**: skip convert bam to bedgraph, **if --nobg, then --bedgraphFiles must not be null!!!**  *(Default: `false`)*
 
 #### Convert filtered bam (should have corresponding .bai file available took) to bedgraph
 - **`--bedgraphFiles`**: .bedgraph files, e.g. (A1.bedgraph A2.bedgraph) *(Default: `null`)*
