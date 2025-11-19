@@ -8,3 +8,6 @@ testing*
 *.pyc
 null/
 conts
+tests/default.nf.test tests/nextflow.config
+.vscode/settings.json
+.github
