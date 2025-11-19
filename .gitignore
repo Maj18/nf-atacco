@@ -16,3 +16,5 @@ tests/default.nf.test tests/nextflow.config
 .pre-commit-config.yaml
 .gitattributes
 .prettierrc.yml
+.prettierignore
+tests/default.nf.test tests/nextflow.config
