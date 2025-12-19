@@ -4,7 +4,7 @@
 |------------------------------------------------------------------|-------------------------------------------------------------|
 
 ### Pipeline Stats
-- **Modules**: 3 (BEDGRAPH, PYGTINI, pyGenomeTracks)
+- **Modules**: 13 (BEDGRAPH, PYGTINI, TOBIAS_FOOTPRINTSCORES, COMBINEBAM, TF_Integration, TOBIAS_TFBINDINGHEATMAP, DECOUPLER_diffTFactivity_RNA, TOBIAS_ATACORRECT, pyGenomeTracks, FILTERBAM, TOBIAS_BINDETECT, MONALISA_TFmotifEnrichment, TOBIAS_FOOTPRINTPLOT)
 - **Languages**: Nextflow DSL2, Groovy, R
 - **Supported Platforms**: Local, HPC, Cloud
 - **Execution Profiles**: Local, Docker, Apptainer, UPPMAX
@@ -16,7 +16,7 @@
 - [NBIS Epigenomics Workshop](https://nbis-workshop-epigenomics.readthedocs.io/)
 - [Seqera](https://seqera.io/)
 
-`nf-atacco` is a bioinformatics pipeline built using [Nextflow](https://www.nextflow.io/) for ATAC-seq (Assay for Transposase-Accessible Chromatin using sequencing) downstream analysis. It currently covers bam to bedgraph conversion, and genome track visualizaiton.
+`nf-atacco` is a bioinformatics pipeline built using [Nextflow](https://www.nextflow.io/) for ATAC-seq (Assay for Transposase-Accessible Chromatin using sequencing) downstream analysis. It currently covers bam to bedgraph conversion, and genome track visualizaiton, as well as three different kinds of transcription factor analyses (TOBIAS footprinting analysis on ATACseq, Monalisa binned TF motif enrichment analysis on ATACseq, differential TF activity analysis on bulk RNAseq data, as well as integrative visualization)
 
 *`nf-atacco` is currently in development and more modules will be added and optimizations performed in time.*
 
@@ -64,17 +64,19 @@ Profiles originally written by `Pontus Freyhult (@pontus)` and adapted for the p
 
 ## Usage
 
-Run the pipeline with the following command:
+Run the pipeline with the following example command:
 
 ```bash
-nextflow run main.nf --project <project id> \
-    --sampleSheet <sampleSheet> --outdir <outDir> -profile uppmax,offline \
+# To generate genome browser trackplot for selected peaks:
+nextflow run ${ataccoDir}/main.nf --project <proj id> \
+    -entry ENTRY_TRACKPLOT \
+    --sampleSheet >sampleSheet> --outdir <outDir> -profile uppmax,offline \
     --peakCallBedfile <peakCallBedfile_merged> \
     --geneModelGTFfile <geneModelGTFfile> \
-    --regions <regions> \
-    --save_tmp true \
+    --regions <regions>c\
+    -c ${ataccoDir}/nextflow.config --save_tmp true \
     -with-report report.html -with-trace trace.txt \
-    -with-timeline timeline.html -resume -bg  
+    -with-timeline timeline.html -resume -bg >> ENTRY_TRACKPLOT.log
 
 ```
 
