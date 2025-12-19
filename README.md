@@ -70,7 +70,7 @@ Run the pipeline with the following example command:
 # To generate genome browser trackplot for selected peaks:
 nextflow run ${ataccoDir}/main.nf --project <proj id> \
     -entry ENTRY_TRACKPLOT \
-    --sampleSheet >sampleSheet> --outdir <outDir> -profile uppmax,offline \
+    --sampleSheet <sampleSheet> --outdir <outDir> -profile uppmax,offline \
     --peakCallBedfile <peakCallBedfile_merged> \
     --geneModelGTFfile <geneModelGTFfile> \
     --regions <regions>c\
