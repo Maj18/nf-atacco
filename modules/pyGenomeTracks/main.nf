@@ -1,5 +1,5 @@
 process TRACKPLOT {
-    publishDir "${params.outdir}/TrackVisualization/",
+    publishDir "${params.outdir}/topAR/TrackVisualization/",
         mode: 'copy',
         scratch: true,
         enabled: params.save_tmp

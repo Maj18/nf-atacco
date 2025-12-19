@@ -8,19 +8,21 @@ workflow TRACKPLOT2 {
     geneModelGTF
     trackIniNameSuffix
     region_ch
+    groups
 
     main:
+    // groups.view()
     // Generate tracks.ini file
-    PYGTINI(bedgraphs, peakCallBed, geneModelGTF, trackIniNameSuffix)
+    PYGTINI(bedgraphs, peakCallBed, geneModelGTF, trackIniNameSuffix, groups)
     ch_tracks_ini = PYGTINI.out.inifile
 
     // Generate plots for each tracks.ini file
     def ch_ini_flat = ch_tracks_ini.flatten()
-    ch_ini_flat.view()
+    // ch_ini_flat.view()
     def ch_region_flat = region_ch.flatten()
-    ch_region_flat.view()
+    // ch_region_flat.view()
     def combined = ch_region_flat.combine(ch_ini_flat)
-    combined.view()
+    // combined.view()
     TRACKPLOT(combined)
     ch_tracks = TRACKPLOT.out.trackplot
     // TRACKPLOT(ch_tracks_ini, region)  //

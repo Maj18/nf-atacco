@@ -29,42 +29,64 @@ println """\
 
 include { GET_BEGRAPH2  } from './subworkflows/BEDGRAPH.nf'
 include { TRACKPLOT2 } from './subworkflows/TRACK_VISUALIZATION.nf'
+include { TOBIAS } from './subworkflows/FOOTPRINTING_TOBIAS.nf'
+include { TFmotifEnrichment } from './subworkflows/MONALISA_TFMOTIFENRICHMENT.nf'
+include { DECOUPLER_DIFFTFACTIVITY } from './subworkflows/DECOUPLER_DIFFTFACTIVITY.nf'
+include { TF_INTEGRATION } from './subworkflows/TF_INTEGRATION.nf'
 
 if (params.sampleSheet) {
     ch_input = Channel
         .fromPath(params.sampleSheet)
         .splitCsv(header: true, sep: ',')
         .map { row -> tuple(file(row.file),file(row.bai),row.group) }
-} else if (params.file) {
-    ch_input = Channel
-        .fromPath(params.file)
-        .map { f -> tuple(file(f), 'default_group') }
-} else {
-    error "Please provide either --sampleSheet or --file"
 }
 
-workflow {
+workflow ENTRY_TRACKPLOT {
+    // Plot genome browser track plots for provide peak regions:
+    if ( !params.peakCallBedfile || !params.geneModelGTFfile || !params.regions ) {
+        error "Please provide --peakCallBedfile --geneModelGTFfile --regions for TRACKPLOT analysis"
+    }
+    // Prepare the bedgraph files
     if( params.bedgraphFiles ) {
-        // Case 1: user provides bedgraph files
-       println "bedgraphFiles param: ${params.bedgraphFiles}"
-       // bedgraphs_input = Channel.from(params.bedgraphFiles.split(',')).map { it.toString() }.collect().map { it.join(' ') }
-       bedgraphs_input = Channel.from(params.bedgraphFiles)
-       bedgraphs_input.view()
+       // User provides bedgraph files
+       // Sort the bedgraph files based on group
+       ch_sorted = Channel.fromPath(params.bedgraphFiles)
+            .splitCsv(header: true, sep: ',')
+            .map { row -> tuple(file(row.file),row.group) }
+	    .groupTuple(by: 1)
+	    .transpose()
+       ch_sorted.view()
+       bedgraphs_input = ch_sorted
+            .map { it[0].toString() }
+            .collect()
+            .map { it.join(',')}
+       group_input = ch_sorted
+            .map { it[1].toString() }
+            .collect()
+            .map { it.join(',') }
+       // bedgraphs_input.view()
     } else {
-        // Case 2: generate bedgraphs from BAMs via GET_BEGRAPH2
-        file_input = ch_input.map { it[0] }
-        bai_input  = ch_input.map { it[1] }
-
-        def bg = GET_BEGRAPH2(file_input, bai_input)
+        // Generate bedgraphs from BAMs via GET_BEGRAPH2
+        GET_BEGRAPH2(ch_input)
+        // Sort the bedgraph files based on groups
+        ch_sorted = GET_BEGRAPH2.out.bedgraph_output
+	    .groupTuple(by: 1)
+            .transpose()
+        // ch_sorted.view()
         // Collect into one list channel
-        // To do, this may need to be tested
-        bedgraphs_input = bg.bedgraph_output
-                            .map { it.toString() }      // convert each file to path string
-                            .collect()                  // gather all emitted paths into a List
-                            .map { it.join(',') }       // join the list with commas
+        bedgraphs_input = ch_sorted
+            .map { it[0].toString() }      // convert each file to path string
+            .collect()                  // gather all emitted paths into a List
+            .map { it.join(',') }       // join the list with commas
         bedgraphs_input.view()
+        group_input = ch_sorted
+            .map { it[1].toString() }      // convert each file to path string
+            .collect()                  // gather all emitted paths into a List
+            .map { it.join(',') }       // join the list with commas
+	group_input.view()
     }
 
+    // Make genome browser track plots for each provide regions
     // sanity check / required error
     if( !params.bedgraphFiles && params.nobg ) {
         error "You must provide --bedgraphFiles when --nobg is set"
@@ -74,8 +96,71 @@ workflow {
     trackIniNameSuffix_input = Channel.value(params.trackIniNameSuffix)
     region_input = Channel.from(params.regions.split(','))
     // region_input.view()
-    TRACKPLOT2(bedgraphs_input, peakCallBed_input, geneModelGTF_input, trackIniNameSuffix_input, region_input)
+    TRACKPLOT2(bedgraphs_input, 
+        peakCallBed_input, 
+        geneModelGTF_input, 
+        trackIniNameSuffix_input,
+        region_input,
+        group_input)
 }
+
+workflow ENTRY_TOBIAS {
+    // Run TOBIAS TF footprinting analysis
+    if ( !params.group_peaks || !group_peak_annotated || !refgenome || !TFs ) {
+        error "Please provide --group_peaks --params.group_peaks --refgenome --TFs for TOBIAS footprinting analysis"
+    }
+    ch_groupBams = ch_input.map { bam, bai, group -> tuple(group, bam, bai) }
+        .groupTuple(by: 0)                 // group by group name
+    ch_groupPeaks = Channel.from(params.group_peaks.split(','))
+        .map { it.split(':') }
+        .map { parts -> tuple(parts[0], parts[1]) }
+    ch_groupBamsPeaks = ch_groupBams.join(ch_groupPeaks).view()
+    TOBIAS(ch_groupBamsPeaks)
+}
+
+
+workflow ENTRY_MONALISA {
+    // Run MONALISA TF motif enrichment analysis
+    if ( !params.difftables || !params.peakAnnotation ) {
+        error "Please provide both --difftables and --peakAnnotation for MONALISA_TFmotifEnrichment"
+    }
+    ch_difftable = Channel.value(params.difftables)
+    ch_peakAnnotation = Channel.fromPath(params.peakAnnotation)
+    if ( !params.pfm_file ) {
+        ch_pfm_file = Channel.fromPath("${projectDir}/data/JASPAR2024_CORE_vertebrates_non-redundant_pfms_jaspar.txt")
+    } else {
+        ch_pfm_file = Channel.fromPath(params.pfm_file)
+    }
+    TFmotifEnrichment(ch_difftable, ch_peakAnnotation, ch_pfm_file)
+}
+
+workflow ENTRY_DIFFTFACTIVITY {
+    def has_dds = params.dds
+    def has_log = params.logNormCount && params.design
+    if ( !has_dds && !has_log ) {
+        error "Please provide either --dds OR both --logNormCount and --design, for ENTRY_DIFFTFACTIVITY"
+    }
+    if ( has_dds && has_log ) {
+        error "Please provide EITHER --dds OR --logNormCount + --design, not both, for ENTRY_DIFFTFACTIVITY"
+    }
+    if ( !params.group_order ) {
+        error "Please also provide --group_order for ENTRY_DIFFTFACTIVITY"
+    }
+
+    // Run decoupleR differential TF activity analaysis
+    DECOUPLER_DIFFTFACTIVITY()
+}
+
+workflow ENTRY_TFINTEGRATION {
+    // Run TF integration
+    ch_diffTFexpr_files = Channel.value(params.diffTFexpr_files)
+    ch_diffTFbinding_file = Channel.value(params.diffTFbinding_file)
+    ch_diffTFactivity_files = Channel.value(params.diffTFactivity_files)
+    ch_monalisa_files = Channel.value(params.monalisa_files)
+    TF_INTEGRATION(ch_diffTFexpr_files,
+        ch_diffTFbinding_file, ch_diffTFactivity_files, ch_monalisa_files)
+}
+
 
 workflow.onComplete {
     println( workflow.success ? """

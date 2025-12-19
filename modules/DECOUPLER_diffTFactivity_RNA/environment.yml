@@ -1,0 +1,31 @@
+channels:
+- plotly
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::bioconductor-biocparallel=1.40.0
+- bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg38=1.4.5
+- bioconda::bioconductor-complexheatmap=2.22.0
+- bioconda::bioconductor-deseq2=1.46.0
+- bioconda::bioconductor-dorothea=1.18.0
+- bioconda::bioconductor-genomicranges=1.58.0
+- bioconda::bioconductor-jaspar2024=0.99.6
+- bioconda::bioconductor-limma=3.62.1
+- bioconda::bioconductor-masigpro=1.78.0
+- bioconda::bioconductor-monalisa=1.12.0
+- bioconda::bioconductor-summarizedexperiment=1.36.0
+- bioconda::bioconductor-tfbstools=1.44.0
+- bioconda::bioconductor-variancepartition=1.36.2
+- bioconda::bioconductor-viper=1.40.0
+- bioconda::decoupler=1.5.0
+- bioconda::r-imputelcmd=2.1
+- conda-forge::r-circlize=0.4.16
+- conda-forge::r-data.table=1.17.8
+- conda-forge::r-ggplot2=4.0.1
+- conda-forge::r-ggrepel=0.9.6
+- conda-forge::r-pheatmap=1.0.13
+- conda-forge::r-readxl=1.4.5
+- conda-forge::r-robustrankaggreg=1.2.1
+- conda-forge::r-tidyverse=2.0.0
+- conda-forge::sqlite=3.51.1
+- plotly::plotly=6.0.0
