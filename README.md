@@ -3,6 +3,8 @@
 | ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue) | ![Version](https://img.shields.io/badge/Version-1.0.0-green) |
 |------------------------------------------------------------------|-------------------------------------------------------------|
 
+# TODO... Add a graphic representation of the pipeline
+
 ### Pipeline Stats
 - **Modules**: 13 (BEDGRAPH, PYGTINI, TOBIAS_FOOTPRINTSCORES, COMBINEBAM, TF_Integration, TOBIAS_TFBINDINGHEATMAP, DECOUPLER_diffTFactivity_RNA, TOBIAS_ATACORRECT, pyGenomeTracks, FILTERBAM, TOBIAS_BINDETECT, MONALISA_TFmotifEnrichment, TOBIAS_FOOTPRINTPLOT)
 - **Languages**: Nextflow DSL2, Groovy, R
@@ -75,6 +77,55 @@ nextflow run ${ataccoDir}/main.nf --project <proj id> \
     --geneModelGTFfile <geneModelGTFfile> \
     --regions <regions>c\
     -resume
+
+# To generate genome browser trackplot for selected peaks from provided begraph files
+nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+    -entry ENTRY_TRACKPLOT \
+    --sampleSheet ${sampleSheet} --outdir ${outDir} -profile uppmax,offline \
+    --nobg \
+    --bedgraphFiles ${bedgraphFiles} \
+    --peakCallBedfile ${peakCallBedfile_merged} \
+    --geneModelGTFfile ${geneModelGTFfile} \
+    --regions ${regions} \
+    -resume
+
+# To run TOBIAS footprinting analysis
+nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+    -entry ENTRY_TOBIAS \
+    --sampleSheet ${sampleSheet} --outdir ${outDir} -profile uppmax,offline \
+    --refgenome ${refgenome} \
+    --group_peaks ${group_peaks} \
+    --peakAnnotation ${peakAnnotation} \
+    --TFs ${TFs} \
+    -resume
+
+# To run Monalisa binned TF motif enrichment analysis
+nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+    -entry ENTRY_MONALISA \
+    --outdir ${outDir} -profile uppmax,offline \
+    --difftables ${difftables} \
+    --peakAnnotation ${peakAnnotation} \
+    -resume
+
+# To run decoupleR differential TF activity analysis
+nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+    -entry ENTRY_DIFFTFACTIVITY \
+    --outdir ${outDir} -profile uppmax,offline \
+    --dds ${dds} \
+    --group_order=${group_order} \
+    -resume
+
+# To integrate differential TF expression, diff TF activities, diff TF bindings, diff TF motif enrichment results
+nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+    -entry ENTRY_TFINTEGRATION \
+    --outdir ${outDir} -profile uppmax,offline \
+    --group_order=${group_order} \
+    --diffTFexpr_files ${diffTFexpr_files} \
+    --diffTFbinding_file ${diffTFbinding_file} \
+    --diffTFactivity_files ${diffTFactivity_files} \
+    --monalisa_files ${monalisa_files} \
+    -resume
+
 
 ```
 
