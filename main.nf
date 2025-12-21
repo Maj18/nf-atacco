@@ -106,8 +106,8 @@ workflow ENTRY_TRACKPLOT {
 
 workflow ENTRY_TOBIAS {
     // Run TOBIAS TF footprinting analysis
-    if ( !params.group_peaks || !group_peak_annotated || !refgenome || !TFs ) {
-        error "Please provide --group_peaks --params.group_peaks --refgenome --TFs for TOBIAS footprinting analysis"
+    if ( !params.group_peaks || !peakAnnotation || !refgenome || !TFs ) {
+        error "Please provide --group_peaks --peakAnnotation --refgenome --TFs for TOBIAS footprinting analysis"
     }
     ch_groupBams = ch_input.map { bam, bai, group -> tuple(group, bam, bai) }
         .groupTuple(by: 0)                 // group by group name

@@ -17,10 +17,10 @@ process BINDETECT {
     script:
     """
     # Extract header for the annotated peaks
-    cut -f 1-16,18 "${params.group_peak_annotated}" | head -n 1 > "AnnotatedPeaks_all_header.txt"
+    cut -f 1-16,18 "${params.peakAnnotation}" | head -n 1 > "AnnotatedPeaks_all_header.txt"
 
     # Match the header and the annotated peaks
-    cut -f 1-16,18 "${params.group_peak_annotated}" > "AnnotatedPeaks_all2.bed"
+    cut -f 1-16,18 "${params.peakAnnotation}" > "AnnotatedPeaks_all2.bed"
 
     echo "Filter for HUMAN (!!!!) standard chromosomes only (removes contigs and alternative assemblies)"
     grep -E '^chr[0-22XY]+[[:space:]]' "AnnotatedPeaks_all2.bed" > "AnnotatedPeaks_all3.bed"
