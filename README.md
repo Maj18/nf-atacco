@@ -79,36 +79,36 @@ nextflow run ${ataccoDir}/main.nf --project <proj id> \
     -resume
 
 # To generate genome browser trackplot for selected peaks from provided begraph files
-nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_TRACKPLOT \
-    --sampleSheet ${sampleSheet} --outdir ${outDir} -profile uppmax,offline \
+    --sampleSheet <sampleSheet> --outdir <outDir> -profile uppmax,offline \
     --nobg \
-    --bedgraphFiles ${bedgraphFiles} \
-    --peakCallBedfile ${peakCallBedfile_merged} \
-    --geneModelGTFfile ${geneModelGTFfile} \
-    --regions ${regions} \
+    --bedgraphFiles <bedgraphFiles> \
+    --peakCallBedfile <peakCallBedfile_merged> \
+    --geneModelGTFfile <geneModelGTFfile> \
+    --regions <regions> \
     -resume
 
 # To run TOBIAS footprinting analysis
-nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_TOBIAS \
-    --sampleSheet ${sampleSheet} --outdir ${outDir} -profile uppmax,offline \
-    --refgenome ${refgenome} \
-    --group_peaks ${group_peaks} \
-    --peakAnnotation ${peakAnnotation} \
-    --TFs ${TFs} \
+    --sampleSheet <sampleSheet> --outdir <outDir> -profile uppmax,offline \
+    --refgenome <refgenome> \
+    --group_peaks <group_peaks> \
+    --peakAnnotation <peakAnnotation> \
+    --TFs <TFs> \
     -resume
 
 # To run Monalisa binned TF motif enrichment analysis
-nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_MONALISA \
-    --outdir ${outDir} -profile uppmax,offline \
-    --difftables ${difftables} \
-    --peakAnnotation ${peakAnnotation} \
+    --outdir <outDir> -profile uppmax,offline \
+    --difftables <difftables> \
+    --peakAnnotation <peakAnnotation> \
     -resume
 
 # To run decoupleR differential TF activity analysis
-nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_DIFFTFACTIVITY \
     --outdir ${outDir} -profile uppmax,offline \
     --dds ${dds} \
@@ -116,20 +116,18 @@ nextflow run ${ataccoDir}/main.nf --project sens2025644 \
     -resume
 
 # To integrate differential TF expression, diff TF activities, diff TF bindings, diff TF motif enrichment results
-nextflow run ${ataccoDir}/main.nf --project sens2025644 \
+nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_TFINTEGRATION \
-    --outdir ${outDir} -profile uppmax,offline \
-    --group_order=${group_order} \
-    --diffTFexpr_files ${diffTFexpr_files} \
-    --diffTFbinding_file ${diffTFbinding_file} \
-    --diffTFactivity_files ${diffTFactivity_files} \
-    --monalisa_files ${monalisa_files} \
+    --outdir <outDir> -profile uppmax,offline \
+    --group_order <group_order> \
+    --diffTFexpr_files <diffTFexpr_files> \
+    --diffTFbinding_file <diffTFbinding_file> \
+    --diffTFactivity_files d<iffTFactivity_files> \
+    --monalisa_files <monalisa_files> \
     -resume
 
 
 ```
-
-Example regions 'chr1:156591000-156592814;chr1:genrich_9654(NAXE),chr3:51705518-53705890;chr3:genrich_99114(SPCS1)'
 
 You may customise the pipeline by modifying the `nextflow.config` file or by passing additional parameters in the command line.
 There are some profiles available for different environments:
