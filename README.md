@@ -4,7 +4,7 @@
 |------------------------------------------------------------------|-------------------------------------------------------------|
 
 # Workflow
-![workflow](docs/images/nf-atacco_workflow.png)
+![workflow](./doc/images/nf-atacco_workflow.png)
 
 ### Pipeline Stats
 - **Modules**: 13 (BEDGRAPH, PYGTINI, TOBIAS_FOOTPRINTSCORES, COMBINEBAM, TF_Integration, TOBIAS_TFBINDINGHEATMAP, DECOUPLER_diffTFactivity_RNA, TOBIAS_ATACORRECT, pyGenomeTracks, FILTERBAM, TOBIAS_BINDETECT, MONALISA_TFmotifEnrichment, TOBIAS_FOOTPRINTPLOT)
