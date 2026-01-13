@@ -3,7 +3,8 @@
 | ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue) | ![Version](https://img.shields.io/badge/Version-1.0.0-green) |
 |------------------------------------------------------------------|-------------------------------------------------------------|
 
-# TODO... Add a graphic representation of the pipeline
+# Workflow
+![workflow](docs/images/nf-atacco_workflow.png)
 
 ### Pipeline Stats
 - **Modules**: 13 (BEDGRAPH, PYGTINI, TOBIAS_FOOTPRINTSCORES, COMBINEBAM, TF_Integration, TOBIAS_TFBINDINGHEATMAP, DECOUPLER_diffTFactivity_RNA, TOBIAS_ATACORRECT, pyGenomeTracks, FILTERBAM, TOBIAS_BINDETECT, MONALISA_TFmotifEnrichment, TOBIAS_FOOTPRINTPLOT)
