@@ -316,14 +316,14 @@ TOBIAS_rslt_list = lapply(pairs, function(gp) {
 
 TOBIAS_diffTFbinding_up_table_list = lapply(names(TOBIAS_rslt_list), function(Pair) {
     TOBIAS_rslt_list[[Pair]] %>%
-        filter(padj<0.05 & change>0) 
+        filter(padj<0.05 & change>0.1) # Because binding scores tend to have small dynamic ranges, so effect/change cutoff is relatively small.
 }) %>% setNames(names(TOBIAS_rslt_list))
 TOBIAS_diffTFbinding_up_list = lapply(TOBIAS_diffTFbinding_up_table_list, function(x) {
     x %>% pull(name) %>% as.character()
 })
 TOBIAS_diffTFbinding_dn_table_list = lapply(names(TOBIAS_rslt_list), function(Pair) {
     TOBIAS_rslt_list[[Pair]] %>%
-        filter(padj<0.05 & change<0)
+        filter(padj<0.05 & change< -0.1)
 }) %>% setNames(names(TOBIAS_rslt_list))
 TOBIAS_diffTFbinding_dn_list = lapply(TOBIAS_diffTFbinding_dn_table_list, function(x) {
     x %>% pull(name) %>% as.character()
@@ -606,6 +606,12 @@ lapply(names(degs_up_table_list), function(pair){
                         method1_name, "_vs_", method2_name, "_", pair, ".pdf"), h=5,w=7)
                     print(p)
                 dev.off()
+                # Write the significant TF table to a file:
+                write.table(merged_table,
+                    file=paste0(outdir_integration, 
+                    "/ScatterPlot_crossMethods/sigTFs_", 
+                        method1_name, "_vs_", method2_name, "_", pair, ".tsv"), 
+                    row.names=FALSE, sep="\t")
             }
         }
     }
