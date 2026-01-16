@@ -316,14 +316,14 @@ TOBIAS_rslt_list = lapply(pairs, function(gp) {
 
 TOBIAS_diffTFbinding_up_table_list = lapply(names(TOBIAS_rslt_list), function(Pair) {
     TOBIAS_rslt_list[[Pair]] %>%
-        filter(padj<0.05 & change>0.1) # Because binding scores tend to have small dynamic ranges, so effect/change cutoff is relatively small.
+        filter(padj<0.05 & change>0.045) # Because binding scores tend to have small dynamic ranges, so effect/change cutoff is relatively small.
 }) %>% setNames(names(TOBIAS_rslt_list))
 TOBIAS_diffTFbinding_up_list = lapply(TOBIAS_diffTFbinding_up_table_list, function(x) {
     x %>% pull(name) %>% as.character()
 })
 TOBIAS_diffTFbinding_dn_table_list = lapply(names(TOBIAS_rslt_list), function(Pair) {
     TOBIAS_rslt_list[[Pair]] %>%
-        filter(padj<0.05 & change< -0.1)
+        filter(padj<0.05 & change< -0.045)
 }) %>% setNames(names(TOBIAS_rslt_list))
 TOBIAS_diffTFbinding_dn_list = lapply(TOBIAS_diffTFbinding_dn_table_list, function(x) {
     x %>% pull(name) %>% as.character()
