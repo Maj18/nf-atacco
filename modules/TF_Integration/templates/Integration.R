@@ -585,8 +585,10 @@ lapply(names(degs_up_table_list), function(pair){
             for (j in (i+1):length(methods_list)) {
                 method1_name = names(methods_list)[i]
                 method2_name = names(methods_list)[j]
-                merged_table = methods_list[[i]] %>%
-                    inner_join(methods_list[[j]], by="TF")
+                merged_table0 = methods_list[[i]] %>%
+                #    inner_join(methods_list[[j]], by="TF")
+                    full_join(methods_list[[j]], by="TF")
+                merged_table = merged_table0 %>% na.omit()
                 merged_table$sync = ifelse(rowSums(merged_table[,2:3]>0)==1, "Discordant", "Concordant")
                 p = ggplot(merged_table, 
                     aes_string(x=colnames(merged_table)[2],
@@ -607,7 +609,7 @@ lapply(names(degs_up_table_list), function(pair){
                     print(p)
                 dev.off()
                 # Write the significant TF table to a file:
-                write.table(merged_table,
+                write.table(merged_table0,
                     file=paste0(outdir_integration, 
                     "/ScatterPlot_crossMethods/sigTFs_", 
                         method1_name, "_vs_", method2_name, "_", pair, ".tsv"), 
