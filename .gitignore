@@ -7,7 +7,7 @@ testing/
 testing*
 *.pyc
 null/
-conts
+conts/*.sif
 tests/default.nf.test tests/nextflow.config
 .vscode/settings.json
 .github
