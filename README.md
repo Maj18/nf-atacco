@@ -19,7 +19,7 @@
 - [NBIS Epigenomics Workshop](https://nbis-workshop-epigenomics.readthedocs.io/)
 - [Seqera](https://seqera.io/)
 
-`nf-atacco` is a bioinformatics pipeline built using [Nextflow](https://www.nextflow.io/) for ATAC-seq (Assay for Transposase-Accessible Chromatin using sequencing) downstream analysis. It currently covers bam to bedgraph conversion, and genome track visualizaiton, as well as three different kinds of transcription factor analyses (TOBIAS footprinting analysis on ATACseq, Monalisa binned TF motif enrichment analysis on ATACseq, differential TF activity analysis on bulk RNAseq data, as well as integrative visualization)
+`nf-atacco` is a bioinformatics pipeline built using [Nextflow](https://www.nextflow.io/) for transcription factor inference by integrating processed ATAC-seq and RNA-seq data through multiple approaches, including TF footprinting, motif enrichment, and downstream transcriptional output analysis. The pipeline also supports integrative visualization of these results, including TF expression. In addition, it provides BAM-to-bedgraph conversion and genome track visualization for ATAC-seq downstream analysis.
 
 *`nf-atacco` is currently in development and more modules will be added and optimizations performed in time.*
 
@@ -40,7 +40,7 @@
 1. Clone the repository:
     ```bash
     git clone https://github.com/Maj18/nf-atacco.git
-    cd nf-atacco
+        - To use a special tag: git checkout v1.0.2
     ```
 
 2. Install nf-core
@@ -52,7 +52,7 @@
 
 ### Offline setup
 
-If you need to run the pipeline in an offline environment, you can download all the container images to the `conts` directory. You can find the container information in the module/*/main.nf file, use singularity pull ... or docker pull ... to download the containers.
+If you need to run the pipeline in an offline environment, you can download all the container images to the `conts` directory (within the nf-atacco folder). You can find the container information in the module/*/main.nf file, use singularity pull ... or docker pull ... to download the containers.
 
 After this, run the pipeline with the `offline` profile in addition to your preferred profile(s).
 
@@ -70,6 +70,15 @@ Profiles originally written by `Pontus Freyhult (@pontus)` and adapted for the p
 Run the pipeline with the following example command:
 
 ```bash
+# Directly from github
+nextflow run Maj18/nf-atacco --your-params-here
+# Or specify a tag or branch
+nextflow run Maj18/nf-atacco -r <tag_or_branch> --your-params-here
+
+# Or on your local clone
+ataccoDir=/path/to/nf-atacco
+nextflow run ${ataccoDir}/main.nf --your-params-here
+
 # To generate genome browser trackplot for selected peaks:
 nextflow run ${ataccoDir}/main.nf --project <proj id> \
     -entry ENTRY_TRACKPLOT \
