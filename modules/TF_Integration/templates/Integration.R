@@ -209,6 +209,7 @@ getVennDiagram = function(
 convertMouse2HumanGeneSymbol = function(gene_list, human_mouse_symbol_map) {
     library(stringr)
     library(data.table)
+    library(org.Hs.eg.db)
     # Example input vector
     names_vec = gene_list
     # 1. Split all at once (list of vectors)
@@ -225,13 +226,15 @@ convertMouse2HumanGeneSymbol = function(gene_list, human_mouse_symbol_map) {
     all_symbols2[not_in_human] = human_mouse_symbol_map[all_symbols2[not_in_human]]
     all_symbols2[is.na(all_symbols2)] = all_symbols[is.na(all_symbols2)] 
     # 5. Recombine symbols back into the original groups
-    dt = data.table(group = group_ids, symbol = all_symbols)
+    dt = data.table(group = group_ids, symbol = all_symbols2)
     result = dt[, paste(symbol, collapse = "::"), by = group][order(group), V1]
     # 6. Convert to character vector
     return(as.character(result))
 }
 
-addHeterodimer = function(df, heterodimerTFs_flatten, heterodimerTFs, TF_col="Feature", effect_col="log2FoldChange") {
+addHeterodimer = function(
+    df, heterodimerTFs_flatten, heterodimerTFs, 
+    TF_col="Feature", effect_col="log2FoldChange") {
     temp = df[df[[TF_col]] %in% heterodimerTFs_flatten, TF_col] %>% 
         as.character()
     if (length(temp)>0) {
@@ -337,7 +340,7 @@ getVennDiagram(
 
 
 print("### Venn diagram for TF motif enrichments from Monalisa across comparisons")
-#-------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------
 print("We will only keep motifs with pvalue < 0.005 in at least one of top 2 negative logFC or top 2 positive bins")
 monalisa_table_list = lapply(monalisa_files, function(file) {
     monalis_out = readRDS(file)
@@ -349,22 +352,26 @@ monalisa_table_list = lapply(monalisa_files, function(file) {
         temp
     }) %>% Reduce(merge,.) %>%
     as.data.frame() %>%
-    # filter(negLog10Padj > -log10(0.05)) %>% dim()
+    #filter(negLog10Padj > -log10(0.05)) # %>% dim()
     filter(negLog10P > -log10(0.005)) 
 
-    lower_bounds = as.numeric(sub("^.?(.*?),.*$", "\\1", unique(temp$Bin)))
+    # lower_bounds = as.numeric(sub("^.?(.*?),.*$", "\\1", unique(temp$Bin)))
+    lower_bounds = as.numeric(sub("^.?(.*?),.*$", "\\1", colnames(monalis_out)))
     # Order bins by the extracted lower bound
     extreme_bins_down = 
-        unique(temp$Bin)[order(lower_bounds)] %>% 
+        # unique(temp$Bin)[order(lower_bounds)] %>% 
+        colnames(monalis_out)[order(lower_bounds)] %>% 
         .[c(1,2)]
     extreme_bins_up = 
-        unique(temp$Bin)[order(lower_bounds)] %>% 
-        .[c(length(unique(temp$Bin))-1,length(unique(temp$Bin)))] 
+        # unique(temp$Bin)[order(lower_bounds)] %>% 
+        # .[c(length(unique(temp$Bin))-1,length(unique(temp$Bin)))] 
+        colnames(monalis_out)[order(lower_bounds)] %>% 
+        .[c(length(colnames(monalis_out))-1,length(colnames(monalis_out)))] 
     dn = filter(temp, Bin %in% c(extreme_bins_down)) %>% 
-        filter(log2enr>0) %>% 
+        filter(log2enr>0) %>%
         group_by(Motif) %>%
         summarise(meanlog2enr = -mean(log2enr)) %>%
-        mutate(TF = rowData(monalis_out)[Motif,"motif.name"]) %>%
+        mutate(TF = rowData(monalis_out)[Motif, "motif.name"]) %>%
         mutate(TF = convertMouse2HumanGeneSymbol(
                 gene_list = TF, 
                 human_mouse_symbol_map = human_mouse_symbol_map))
@@ -372,7 +379,7 @@ monalisa_table_list = lapply(monalisa_files, function(file) {
         filter(log2enr>0) %>% 
         group_by(Motif) %>%
         summarise(meanlog2enr = mean(log2enr)) %>%
-        mutate(TF = rowData(monalis_out)[Motif,"motif.name"]) %>%
+        mutate(TF = rowData(monalis_out)[Motif, "motif.name"]) %>%
         mutate(TF = convertMouse2HumanGeneSymbol(
                 gene_list = TF, 
                 human_mouse_symbol_map = human_mouse_symbol_map))
@@ -416,7 +423,7 @@ degs_up_table_list = lapply(TFexprFiles, function(file) {
             keytype = "ENSEMBL",
             multiVals = "first")) %>%
         filter(Feature %in% TF_list) %>%
-        filter(pvalue<0.005&log2FoldChange>0) 
+        filter(padj<0.05&log2FoldChange>0.3) 
     addHeterodimer(df=df, heterodimerTFs_flatten, heterodimerTFs) 
 }) %>% setNames(sapply(TFexprFiles, function(file) {
     gsub(".csv|_", "", gsub("DEGs", "", basename(file)))}))
@@ -437,7 +444,7 @@ degs_dn_table_list = lapply(TFexprFiles, function(file) {
             keytype = "ENSEMBL",
             multiVals = "first")) %>%
         filter(Feature %in% TF_list) %>%
-        filter(pvalue<0.005&log2FoldChange<0) 
+        filter(padj<0.05&log2FoldChange< -0.3) 
     addHeterodimer(df=df, heterodimerTFs_flatten, heterodimerTFs) 
 }) %>% setNames(sapply(TFexprFiles, function(file) {
     gsub(".csv|_", "", gsub("DEGs", "", basename(file)))}))

@@ -50,10 +50,10 @@ prepareData = function(dat, outdir) {
     gcContentPeaks = letterFrequency(DNAStringSet(gr$Sequence), "GC", as.prob=TRUE)[,1]
     mcols(gr)$gc = gcContentPeaks
 
-    print("----Keep enhancers at least 1kb away from any TSS and not in any gene, this is where most difference occur!")
-    keep = gr$annotation %in% c("Distal Intergenic", "Promoter (1-2kb)", "Promoter (2-3kb)")
-    gr = gr[keep]
-    table(gr$annotation)
+    # print("----Keep enhancers at least 1kb away from any TSS and not in any gene, this is where most difference occur!")
+    # keep = gr$annotation %in% c("Distal Intergenic", "Promoter (1-2kb)", "Promoter (2-3kb)")
+    # gr = gr[keep]
+    # table(gr$annotation)
 
     print("----Only keep enhancers on autosomes and sex chromosomes...")
     ## subset autosomal enhancers
@@ -119,7 +119,7 @@ runBinnedMotifEnr = function(gr, pfm_file, outdir) {
     dev.off()
 
     print("-----Before proceeding with the enrichment analysis, 
-            let’s check if there is any sequence bias associated")
+            let us  check if there is any sequence bias associated")
     # with the bins. oﬀers some plo%ng func!ons for this purpose.
     # extract DNA sequences of the enhancers
     seqs = getSeq(BSgenome.Hsapiens.UCSC.hg38, gr)
@@ -137,6 +137,8 @@ runBinnedMotifEnr = function(gr, pfm_file, outdir) {
     pwm = toPWM(pfm)
     names(bins) = names(seqs)
     names(pwm) = ID(pwm)
+    list(seqs=seqs, bins=bins, pwm=pwm) %>% saveRDS(
+        paste0(outdir, "/data/monalisa_input_seqs_bins_pwm.RDS"))
 
     print("----Run binned enrichment")
     ## motif enrichment using 4 cores
@@ -144,14 +146,16 @@ runBinnedMotifEnr = function(gr, pfm_file, outdir) {
     bp = SnowParam(workers = coreNum, type = "SOCK", 
         exportglobals = TRUE, timeout = 3600)
     # bp = BiocParallel::MulticoreParam(1)
-    list(seqs=seqs, bins=bins, pwm=pwm) %>% saveRDS(
-        paste0(outdir, "/data/monalisa_input_seqs_bins_pwm.RDS"))
+    on.exit({
+        bpstop(bp)
+        closeAllConnections()
+        gc()
+    }, add = TRUE)
     se = calcBinnedMotifEnrR(seqs = seqs,
         bins = bins,
         pwmL = pwm,
         background = "otherBins",
         BPPARAM = bp)
-    se
 
     print("----Save SummarizedExperiment object...")
     paste0(outdir, "/result_files") %>%
@@ -210,6 +214,70 @@ visualizeEnrichment = function(se, outdir) {
 dev.off()
 }
 
+getTFmotifHits = function(peakannotation, pfm_file, out_dir, difftables) {
+    # peakannotation = readr::read_tsv(peakAnnotation)
+    pfm = readJASPARMatrix(pfm_file, matrixClass=c("PFM"))
+    pwm = toPWM(pfm)
+    names(pwm) = ID(pwm)
+    hits = lapply(1:nrow(peakannotation), function(i) {
+        seq = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38, 
+            peakannotation[i, "seqnames", drop=TRUE], 
+            start=peakannotation[i, "start", drop=TRUE], 
+            end=peakannotation[i, "end", drop=TRUE])
+        seq_set = DNAStringSet(seq)
+        names(seq_set) = peakannotation[i, "Geneid", drop=TRUE]
+        bp = SnowParam(workers = coreNum, type = "SOCK", 
+                    exportglobals = TRUE, timeout = 3600)
+        on.exit({
+            bpstop(bp)
+            closeAllConnections()
+            gc()
+        }, add = TRUE)
+        hit = findMotifHits(query = pwm,
+            subject = seq_set,
+            min.score = 10.0,
+            method = "matchPWM",
+            BPPARAM = bp)
+        hit
+    }) 
+
+    saveRDS(hits, paste0(out_dir, "TFmotif_hits_list_allPeaks.RDS"))
+    combined_hits = do.call(c, hits)
+    rm(hits)
+    gc()
+    # we can summarize the number of predicted hits per promoter in matrix format
+    hitsMatrix = table(
+        factor(seqnames(combined_hits), levels = unique(peakannotation$Geneid)),
+        factor(combined_hits$pwmname, levels = unique(name(pwm)))) 
+    hitsMatrix_dat = hitsMatrix %>% as.data.frame.matrix() %>% 
+        tibble::rownames_to_column(var="peakID") 
+    rm(hitsMatrix)
+    gc()
+    saveRDS(hitsMatrix_dat, paste0(out_dir, "TFmotif_hitsMatrix_allPeaks.RDS"))
+    write.table(hitsMatrix_dat, 
+        file = paste0(out_dir, "TFmotif_hitsMatrix_allPeaks.tsv"), 
+        sep = "\t", row.names = FALSE, quote = FALSE)
+
+    lapply(difftables, function(difftable) {
+        dat = hitsMatrix_dat %>%
+            dplyr::right_join(read.table(difftable) %>% 
+                tibble::rownames_to_column(var="peakID") %>%
+                select(-c(Chr, Start, End)) %>%
+                dplyr::left_join(peakannotation %>% 
+                mutate(peakID=Geneid) %>%
+                dplyr::select(-Geneid)) %>% na.omit() %>%
+                arrange(., pvalue))
+        outdir = paste0(out_dir, "/", 
+                gsub(".tsv$", "", basename(difftable)))
+        dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+        write.table(dat, 
+            file = paste0(outdir, "TFmotif_hitsMatrix_diff.tsv"),
+            sep = "\t", row.names = FALSE, quote = FALSE)
+    })
+}
+
+
+
 
 suppressPackageStartupMessages({
 library(monaLisa)
@@ -240,6 +308,13 @@ file.copy(from=pfm_file,
     to=paste0(out_dir,"/", basename(pfm_file)))
 print("----Please be aware that Monalia requires 0-based peak coordinate!!!")
 difftables = strsplit(difftables, ";")[[1]]
+
+# Get and save TF motif hits for all peaks
+print("Get TF motif hits for all peaks...")
+getTFmotifHits(peakannotation, pfm_file, out_dir, difftables)
+
+# For each differential table, run binned motif enrichment analysis
+print("Run binned motif enrichment analysis for each differential table...")
 lapply(difftables, function(difftable) {
     print(paste0("Processing ", difftable, "..."))
     dat = read.table(difftable) %>% 
@@ -262,7 +337,7 @@ lapply(difftables, function(difftable) {
     visualizeEnrichment(se, outdir)
 })
 
-ls_obj_info()
+# ls_obj_info()
 
 # print("Binned k-mer enrichment analysis...")
 # print("----Calculating k-mer enrichment...")
