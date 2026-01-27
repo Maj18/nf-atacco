@@ -2,7 +2,7 @@ process MONALISA {
     publishDir "${params.outdir}/",
         mode: 'copy'
     tag "Monalisa"
-    label "highMemMT"
+    label "Monalisa"
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' || workflow.containerEngine == "apptainer" ?
         'oras://community.wave.seqera.io/library/bioconductor-biocparallel_bioconductor-bsgenome.hsapiens.ucsc.hg38_bioconductor-complexheatmap_bioconductor-genomicranges_pruned:9e8dadbd18083cb4':

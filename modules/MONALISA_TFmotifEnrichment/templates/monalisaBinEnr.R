@@ -144,7 +144,7 @@ runBinnedMotifEnr = function(gr, pfm_file, outdir) {
     ## motif enrichment using 4 cores
     # library(BiocParallel)
     bp = SnowParam(workers = coreNum, type = "SOCK", 
-        exportglobals = TRUE, timeout = 3600)
+        exportglobals = TRUE, timeout = 7200)
     # bp = BiocParallel::MulticoreParam(1)
     on.exit({
         bpstop(bp)
@@ -219,27 +219,27 @@ getTFmotifHits = function(peakannotation, pfm_file, out_dir, difftables) {
     pfm = readJASPARMatrix(pfm_file, matrixClass=c("PFM"))
     pwm = toPWM(pfm)
     names(pwm) = ID(pwm)
-    hits = lapply(1:nrow(peakannotation), function(i) {
+    on.exit({
+        bpstop(bp)
+        closeAllConnections()
+        gc()
+    }, add = TRUE)
+    bp = SnowParam(workers = coreNum, type = "SOCK", 
+                    exportglobals = TRUE, timeout = 7200)
+    hits = bplapply(1:nrow(peakannotation), function(i, pwm_local) {
         seq = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38, 
             peakannotation[i, "seqnames", drop=TRUE], 
             start=peakannotation[i, "start", drop=TRUE], 
             end=peakannotation[i, "end", drop=TRUE])
         seq_set = DNAStringSet(seq)
         names(seq_set) = peakannotation[i, "Geneid", drop=TRUE]
-        bp = SnowParam(workers = coreNum, type = "SOCK", 
-                    exportglobals = TRUE, timeout = 3600)
-        on.exit({
-            bpstop(bp)
-            closeAllConnections()
-            gc()
-        }, add = TRUE)
-        hit = findMotifHits(query = pwm,
+        hit = findMotifHits(query = pwm_local,
             subject = seq_set,
             min.score = 10.0,
             method = "matchPWM",
             BPPARAM = bp)
         hit
-    }) 
+    }, BPPARAM = bp, pwm_local=pwm) 
 
     saveRDS(hits, paste0(out_dir, "TFmotif_hits_list_allPeaks.RDS"))
     combined_hits = do.call(c, hits)
