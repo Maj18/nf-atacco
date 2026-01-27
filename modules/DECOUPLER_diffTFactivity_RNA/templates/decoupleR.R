@@ -29,7 +29,8 @@ dir.create(outdir, recursive=T, showWarning=F)
 
 # Set up functions
 VisualizeTopTFactivities_VIPER = function(
-    tfs=NULL, n_tfs = 25, sample_acts=NULL, design, outdir, feature_meta=NULL,target_expression=NULL) {
+    tfs=NULL, n_tfs = 25, sample_acts=NULL, design, 
+    outdir, feature_meta=NULL, target_expression=NULL) {
     print("Plot heatmap of top variable TF activities across samples...")
     # Transform to wide matrix
     if (!is.null(sample_acts)) {
@@ -166,7 +167,7 @@ limmaTest = function(dat, paired=TRUE, currentCovariate=NULL,
   # print(dim(dat))
   #if (!is.null(currentCovariate)) {currentCovariate=NULL}
   # Only keep features that have at least 2 values in each group
-    keep = sapply(1:nrow(dat), function(i) {
+keep = sapply(1:nrow(dat), function(i) {
         row = dat[i, ]
         grp1 = row[meta$Group==groups[1]] %>% na.omit()
         grp2 = row[meta$Group==groups[2]] %>% na.omit()
@@ -203,7 +204,10 @@ limmaTest = function(dat, paired=TRUE, currentCovariate=NULL,
     # n refers to the number of top-ranked genes to be returned.
   } else {rlst_co = NA}
   
-  fit.con = eBayes(fit, robust = TRUE, trend=TRUE)
+  # Remove probes with any NA coefficients
+  keep = rowSums(is.na(fit$coefficients)) == 0
+  fit2 = fit[keep, ]
+  fit.con = eBayes(fit2, robust = TRUE, trend=TRUE)
   rlst_interest = topTable(fit.con, n=Inf, coef=levels(meta$Group)[2]) %>%
       arrange(-t) 
   
