@@ -102,11 +102,10 @@ nextflow run ${ataccoDir}/main.nf --project <projID> \
 # To run TOBIAS footprinting analysis
 nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_TOBIAS \
-    --outdir <outDir> -profile uppmax,offline \
+    --sampleSheet <sampleSheet> --outdir <outDir> -profile uppmax,offline \
     --refgenome <refgenome> \
     --group_peaks <group_peaks> \
     --peakAnnotation <peakAnnotation> \
-    --TFs <TFs> \
     -resume
 
 # To run Monalisa binned TF motif enrichment analysis
