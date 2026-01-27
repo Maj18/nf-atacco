@@ -44,9 +44,16 @@ workflow TOBIAS {
     ch_diffTFbinding = BINDETECT.out.DiffTFBinding_dir
 
     // TOBIAS footprint plot
-    TFs = Channel.of(params.TFs)
-        .map { it.split(",") }
+    TFs = ch_diffTFbinding
+        .map { folder ->
+            folder.listFiles()
+                .findAll { it.isDirectory() }
+                .collect { it.name }
+        }
         .flatten()
+    // TFs = Channel.of(params.TFs)
+    //     .map { it.split(",") }
+    //     .flatten()
     TFs.view()
     FTplotIn_ch = TFs.combine(ch_diffTFbinding).combine(groups).combine(
         ch_corrected_dir.map { it[1].toString() } 
