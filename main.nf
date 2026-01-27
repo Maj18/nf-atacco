@@ -27,7 +27,7 @@ println """\
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FILTERBAM } from '../modules/FILTERBAM'
+// include { FILTERBAM } from '../modules/FILTERBAM'
 include { GET_BEGRAPH2  } from './subworkflows/BEDGRAPH.nf'
 include { TRACKPLOT2 } from './subworkflows/TRACK_VISUALIZATION.nf'
 include { TOBIAS } from './subworkflows/FOOTPRINTING_TOBIAS.nf'
@@ -112,10 +112,10 @@ workflow ENTRY_TOBIAS {
         error "Please provide --sampleSheet --group_peaks --peakAnnotation --refgenome for TOBIAS footprinting analysis"
     }
     // Filtering the bam files to only keep reads with MAPQ>30
-    FILTERBAM(file_input)
-    ch_filteredbam = FILTERBAM.out.filteredbam
-    ch_groupBams = ch_filteredbam.map { bam, bai, group -> tuple(group, bam, bai) }
-    // ch_groupBams = ch_input.map { bam, bai, group -> tuple(group, bam, bai) }
+    // FILTERBAM(file_input)
+    // ch_filteredbam = FILTERBAM.out.filteredbam
+    // ch_groupBams = ch_filteredbam.map { bam, bai, group -> tuple(group, bam, bai) }
+    ch_groupBams = ch_input.map { bam, bai, group -> tuple(group, bam, bai) }
         .groupTuple(by: 0)                 // group by group name
     ch_groupPeaks = Channel.from(params.group_peaks.split(','))
         .map { it.split(':') }
