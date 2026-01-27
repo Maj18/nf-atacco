@@ -102,7 +102,7 @@ nextflow run ${ataccoDir}/main.nf --project <projID> \
 # To run TOBIAS footprinting analysis
 nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_TOBIAS \
-    --sampleSheet <sampleSheet> --outdir <outDir> -profile uppmax,offline \
+    --outdir <outDir> -profile uppmax,offline \
     --refgenome <refgenome> \
     --group_peaks <group_peaks> \
     --peakAnnotation <peakAnnotation> \
