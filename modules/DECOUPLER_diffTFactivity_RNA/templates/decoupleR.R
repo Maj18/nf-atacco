@@ -1,6 +1,6 @@
 #!/opt/conda/bin/R
 
-# usage: Rscript decoupleR.R --dds <dds> --outdir <outdir_integration> --group_order <group_order>
+# usage: Rscript decoupleR.R --dds <dds> --outdir <outdir_integration> --group_order <group_order> --currentCovariate <currentCovariate>
 
 args = commandArgs(trailingOnly = TRUE)
 # Simple argument parser
@@ -18,6 +18,7 @@ logNormCount  = opt$logNormCount
 design = opt$design
 outdir = opt$outdir
 group_order = opt$group_order # comma separated string, e.g. "Control,HFrEF,HFpEF"
+currentCovariate = opt$currentCovariate # e.g. "age"
 dir.create(outdir, recursive=T, showWarning=F)
 
 # singularity shell /proj/nobackup/sens2025644/wharf/ekolyal/ekolyal-sens2025644/nf-atacco/conts/bioconductor-biocparallel_bioconductor-bsgenome.hsapiens.ucsc.hg38_bioconductor-complexheatmap_bioconductor-deseq2_pruned_a1ceaff5bb99ce9d.sif
@@ -202,7 +203,7 @@ limmaTest = function(dat, paired=TRUE, currentCovariate=NULL,
     # n refers to the number of top-ranked genes to be returned.
   } else {rlst_co = NA}
   
-  fit.con = eBayes(fit, robust = TRUE)
+  fit.con = eBayes(fit, robust = TRUE, trend=TRUE)
   rlst_interest = topTable(fit.con, n=Inf, coef=levels(meta$Group)[2]) %>%
       arrange(-t) 
   
@@ -344,7 +345,8 @@ inferTFactivity = function(outdir, logNormCount, design) {
 }
 
 runLimmaDiffTFactivity = function(
-    sample_acts_filtered, design, logNormCount, outdir, group_order) {
+    sample_acts_filtered, currentCovariate,
+    design, logNormCount, outdir, group_order) {
     print("# Limma differential analysis of TF activities between conditions...")
     print("## Prepare data matrix for limma...")
     dat4limma = sample_acts_filtered %>%
@@ -368,6 +370,7 @@ runLimmaDiffTFactivity = function(
         dir.create(paste0(outdir,"/", Pair), showWarnings=F)
         print(paste0("Comparing ", Pair, "..."))
         tf_activity_diff = limmaTest(dat=dat4limma, 
+            currentCovariate=currentCovariate,
             paired=FALSE, 
             meta=mutate(design, Group=condition, Samples=sample),
             groups=gp)
@@ -494,8 +497,11 @@ TFactivity_rslt = inferTFactivity(
 
 # Perform differential TF activity analysis between groups ...
 tf_activity_diff_list = runLimmaDiffTFactivity(
-    TFactivity_rslt$sample_acts_filtered, 
-    design, logNormCount, outdir, 
+    sample_acts_filtered=TFactivity_rslt$sample_acts_filtered, 
+    currentCovariate=currentCovariate,
+    design, 
+    logNormCount, 
+    outdir, 
     group_order)
 
 # Visualize differential TF activities...

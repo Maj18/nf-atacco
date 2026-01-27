@@ -119,9 +119,10 @@ nextflow run ${ataccoDir}/main.nf --project <projID> \
 # To run decoupleR differential TF activity analysis
 nextflow run ${ataccoDir}/main.nf --project <projID> \
     -entry ENTRY_DIFFTFACTIVITY \
-    --outdir ${outDir} -profile uppmax,offline \
-    --dds ${dds} \
-    --group_order=${group_order} \
+    --outdir <outDir> -profile uppmax,offline \
+    --dds <dds> \
+    --group_order=<group_order> \
+    --currentCovariate=<currentCovariate> \
     -resume
 
 # To integrate differential TF expression, diff TF activities, diff TF bindings, diff TF motif enrichment results
@@ -131,7 +132,7 @@ nextflow run ${ataccoDir}/main.nf --project <projID> \
     --group_order <group_order> \
     --diffTFexpr_files <diffTFexpr_files> \
     --diffTFbinding_file <diffTFbinding_file> \
-    --diffTFactivity_files d<iffTFactivity_files> \
+    --diffTFactivity_files <iffTFactivity_files> \
     --monalisa_files <monalisa_files> \
     -resume
 
@@ -209,6 +210,7 @@ file,group
 - **`--logNormCount`**: Path to the log transformed normalized count table file *(Default: `null`)*
 - **`--design`**: Paths to the meta data table file *(Default: `null`)*
 - **`--group_order`**: comma separated, reference group first *(Default: `null`)*
+- **`--currentCovariate`**: current covariate to be differential analysis of TF activity *(Default: `null`)*
 
 #### INTEGRATION parameters
 - **`--diffTFexpr_files`**: Paths to bulk RNAseq differential expression tables (so far only support DESeq2 output), separated by ';' if multiple files *(Default: `null`)*

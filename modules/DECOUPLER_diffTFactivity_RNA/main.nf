@@ -13,7 +13,7 @@ process DIFFTFACTIVITY {
 
     script:
     """
-    Rscript ${moduleDir}/templates/decoupleR.R --dds "${params.dds}" --outdir "diffTFactivity_RNA" --group_order "${params.group_order}"
+    Rscript ${moduleDir}/templates/decoupleR.R --dds "${params.dds}" --outdir "diffTFactivity_RNA" --group_order "${params.group_order}" --currentCovariate "${params.currentCovariate}"
     """
 }
 
