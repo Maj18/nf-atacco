@@ -11,14 +11,15 @@ workflow TOBIAS {
 
     main:
     // Merge bams by groups
-    bams_grouped = bamspeaks_grouped.map { group, bams, bais, peaks -> tuple(group, bams, bais) }.view()
+    bams_grouped = 
+        bamspeaks_grouped.map { group, bams, bais, peaks, peakAnnotation -> tuple(group, bams, bais) }.view() //
     MERGEBAM(bams_grouped)
     ch_mergedbam = MERGEBAM.out.mergedbams
 
     // TOBIAS ATACorrect
     // This will do Tn5 shifting by default
     // It will also correct Tn5 binding sequence preferences
-    peaks_grouped = bamspeaks_grouped.map { group, bams, bais, peaks -> tuple(group, peaks) } //n
+    peaks_grouped = bamspeaks_grouped.map { group, bams, bais, peaks, peakAnnotation -> tuple(group, peaks) } //
     megedbam_peaks = peaks_grouped.join(ch_mergedbam).view()
     ATACORRECT(megedbam_peaks)
     ch_corrected_dir = ATACORRECT.out.corrected_dir
@@ -37,8 +38,15 @@ workflow TOBIAS {
     ftscores = ch_ftscores.map { it[1].toString() }      // convert each file to path string
                             .collect()                  // gather all emitted paths into a List
                             .map { it.join(',') }       // join the list with commas
+    peakAnn = bamspeaks_grouped
+        .map { group, bams, bais, peaks, peakAnnotation -> peakAnnotation }
+        .unique()
     // ftscores.view()
-    groups_ftscores = groups.combine(ftscores)
+    // groups_ftscores = groups.combine(ftscores).combine(peakAnn)
+    groups_ftscores = groups
+        .combine(ftscores)
+        .combine(peakAnn)
+        // .map { grpFtscore, peakAnnotation -> tuple(grpFtscore[0], grpFtscore[1], peakAnnotation) }
     groups_ftscores.view()
     BINDETECT(groups_ftscores)
     ch_diffTFbinding = BINDETECT.out.DiffTFBinding_dir

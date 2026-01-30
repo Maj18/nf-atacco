@@ -9,7 +9,7 @@ process BINDETECT {
         'community.wave.seqera.io/library/tobias:0.17.2--3a49d50188327fd2' }"
 
     input:
-    tuple val(groups), val(ftscores)
+    tuple val(groups), val(ftscores), file(peakAnnotation)
     
     output:
     path("DiffTFBinding"), emit: DiffTFBinding_dir
@@ -17,10 +17,10 @@ process BINDETECT {
     script:
     """
     # Extract header for the annotated peaks
-    cut -f 1-16,18 "${params.peakAnnotation}" | head -n 1 > "AnnotatedPeaks_all_header.txt"
+    cut -f 1-16,18 "${peakAnnotation}" | head -n 1 > "AnnotatedPeaks_all_header.txt"
 
     # Match the header and the annotated peaks
-    cut -f 1-16,18 "${params.peakAnnotation}" > "AnnotatedPeaks_all2.bed"
+    cut -f 1-16,18 "${peakAnnotation}" > "AnnotatedPeaks_all2.bed"
 
     echo "Filter for HUMAN (!!!!) standard chromosomes only (removes contigs and alternative assemblies)"
     grep -E '^chr[0-22XY]+[[:space:]]' "AnnotatedPeaks_all2.bed" > "AnnotatedPeaks_all3.bed"
