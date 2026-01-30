@@ -71,7 +71,7 @@ workflow ENTRY_TRACKPLOT {
         GET_BEGRAPH2(ch_input)
         // Sort the bedgraph files based on groups
         ch_sorted = GET_BEGRAPH2.out.bedgraph_output
-	    .groupTuple(by: 1)
+	        .groupTuple(by: 1)
             .transpose()
         // ch_sorted.view()
         // Collect into one list channel
@@ -121,7 +121,11 @@ workflow ENTRY_TOBIAS {
     ch_groupPeaks = Channel.from(params.group_peaks.split(','))
         .map { it.split(':') }
         .map { parts -> tuple(parts[0], parts[1]) }
-    ch_groupBamsPeaks = ch_groupBams.join(ch_groupPeaks).view()
+    ch_peakAnnotation = Channel.fromPath(params.peakAnnotation)
+    ch_groupBamsPeaks = ch_groupBams
+        .join(ch_groupPeaks)
+        .combine(ch_peakAnnotation)
+        // .map { joined, peakAnnotation -> tuple(joined[0], joined[1], joined[2], joined[3], peakAnnotation) }.view() //
     TOBIAS(ch_groupBamsPeaks)
 }
 
@@ -133,11 +137,13 @@ workflow ENTRY_MONALISA {
     }
     ch_difftable = Channel.value(params.difftables)
     ch_peakAnnotation = Channel.fromPath(params.peakAnnotation)
+    ch_peakAnnotation.view()
     if ( !params.pfm_file ) {
         ch_pfm_file = Channel.fromPath("${projectDir}/data/JASPAR2024_CORE_vertebrates_non-redundant_pfms_jaspar.txt")
     } else {
         ch_pfm_file = Channel.fromPath(params.pfm_file)
     }
+    ch_pfm_file.view()
     TFmotifEnrichment(ch_difftable, ch_peakAnnotation, ch_pfm_file)
 }
 

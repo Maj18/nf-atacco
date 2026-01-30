@@ -214,34 +214,48 @@ visualizeEnrichment = function(se, outdir) {
 dev.off()
 }
 
-getTFmotifHits = function(peakannotation, pfm_file, out_dir, difftables) {
+getTFmotifHits = function(peakannotation, pfm_file, difftables) {
     # peakannotation = readr::read_tsv(peakAnnotation)
     pfm = readJASPARMatrix(pfm_file, matrixClass=c("PFM"))
     pwm = toPWM(pfm)
     names(pwm) = ID(pwm)
-    on.exit({
-        bpstop(bp)
-        closeAllConnections()
-        gc()
-    }, add = TRUE)
     bp = SnowParam(workers = coreNum, type = "SOCK", 
                     exportglobals = TRUE, timeout = 7200)
-    hits = bplapply(1:nrow(peakannotation), function(i, pwm_local) {
-        seq = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38, 
-            peakannotation[i, "seqnames", drop=TRUE], 
-            start=peakannotation[i, "start", drop=TRUE], 
-            end=peakannotation[i, "end", drop=TRUE])
-        seq_set = DNAStringSet(seq)
-        names(seq_set) = peakannotation[i, "Geneid", drop=TRUE]
-        hit = findMotifHits(query = pwm_local,
-            subject = seq_set,
-            min.score = 10.0,
-            method = "matchPWM",
-            BPPARAM = bp)
-        hit
-    }, BPPARAM = bp, pwm_local=pwm) 
-
-    saveRDS(hits, paste0(out_dir, "TFmotif_hits_list_allPeaks.RDS"))
+    seqs = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38,
+               names = peakannotation$seqnames,
+               start = peakannotation$start,
+               end = peakannotation$end)
+    names(seqs) = peakannotation$Geneid
+    hits = findMotifHits(query = pwm,
+                      subject = seqs,
+                      min.score = 10.0,
+                      method = "matchPWM",
+                      BPPARAM = bp)
+    # Clean up
+    bpstop(bp)
+    closeAllConnections()
+    gc()
+    # on.exit({
+    #     bpstop(bp)
+    #     closeAllConnections()
+    #     gc()
+    # }, add = TRUE)
+    # hits = bplapply(1:nrow(peakannotation), function(i, pwm_local) {
+    #     seq = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38, 
+    #         peakannotation[i, "seqnames", drop=TRUE], 
+    #         start=peakannotation[i, "start", drop=TRUE], 
+    #         end=peakannotation[i, "end", drop=TRUE])
+    #     seq_set = DNAStringSet(seq)
+    #     names(seq_set) = peakannotation[i, "Geneid", drop=TRUE]
+    #     hit = findMotifHits(query = pwm_local,
+    #         subject = seq_set,
+    #         min.score = 10.0,
+    #         method = "matchPWM",
+    #         BPPARAM = bp)
+    #     hit
+    # }, BPPARAM = bp, pwm_local=pwm) 
+    dir.create("PeakTFmotifHits/", recursive=TRUE, showWarnings=FALSE)
+    saveRDS(hits, paste0("PeakTFmotifHits/TFmotif_hits_list_allPeaks.RDS"))
     combined_hits = do.call(c, hits)
     rm(hits)
     gc()
@@ -253,9 +267,9 @@ getTFmotifHits = function(peakannotation, pfm_file, out_dir, difftables) {
         tibble::rownames_to_column(var="peakID") 
     rm(hitsMatrix)
     gc()
-    saveRDS(hitsMatrix_dat, paste0(out_dir, "TFmotif_hitsMatrix_allPeaks.RDS"))
+    saveRDS(hitsMatrix_dat, paste0("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.RDS"))
     write.table(hitsMatrix_dat, 
-        file = paste0(out_dir, "TFmotif_hitsMatrix_allPeaks.tsv"), 
+        file = paste0("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.tsv"), 
         sep = "\t", row.names = FALSE, quote = FALSE)
 
     lapply(difftables, function(difftable) {
@@ -267,11 +281,11 @@ getTFmotifHits = function(peakannotation, pfm_file, out_dir, difftables) {
                 mutate(peakID=Geneid) %>%
                 dplyr::select(-Geneid)) %>% na.omit() %>%
                 arrange(., pvalue))
-        outdir = paste0(out_dir, "/", 
-                gsub(".tsv$", "", basename(difftable)))
+        outdir = paste0("PeakTFmotifHits/", 
+                    gsub(".tsv$", "", basename(difftable)))
         dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
         write.table(dat, 
-            file = paste0(outdir, "TFmotif_hitsMatrix_diff.tsv"),
+            file = paste0(outdir, "/TFmotif_hitsMatrix_diff.tsv"),
             sep = "\t", row.names = FALSE, quote = FALSE)
     })
 }
@@ -309,10 +323,6 @@ file.copy(from=pfm_file,
 print("----Please be aware that Monalia requires 0-based peak coordinate!!!")
 difftables = strsplit(difftables, ";")[[1]]
 
-# Get and save TF motif hits for all peaks
-print("Get TF motif hits for all peaks...")
-getTFmotifHits(peakannotation, pfm_file, out_dir, difftables)
-
 # For each differential table, run binned motif enrichment analysis
 print("Run binned motif enrichment analysis for each differential table...")
 lapply(difftables, function(difftable) {
@@ -336,6 +346,10 @@ lapply(difftables, function(difftable) {
     print("Visualize enrichment results...")
     visualizeEnrichment(se, outdir)
 })
+
+# Get and save TF motif hits for all peaks
+print("Get TF motif hits for all peaks...")
+getTFmotifHits(peakannotation, pfm_file, difftables)
 
 # ls_obj_info()
 

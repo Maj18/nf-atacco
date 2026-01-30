@@ -9,12 +9,16 @@ process MONALISA {
         'community.wave.seqera.io/library/bioconductor-biocparallel_bioconductor-bsgenome.hsapiens.ucsc.hg38_bioconductor-complexheatmap_bioconductor-genomicranges_pruned:d96030d6d371c514' }"
 
     input:
-    val(difftables)
-    file(peakAnnotation)
-    file(pfm_file)
+        val(difftables)
+        file(peakAnnotation)
+        file(pfm_file)
 
     output:
-    path("MonaLisa"), emit: MonaLisaBinnedMotifEnrichment
+        path("PeakTFmotifHits/TFmotif_hits_list_allPeaks.RDS"), emit: hits_list_rds
+        path("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.RDS"), emit: hits_matrix_rds
+        path("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.tsv"), emit: hits_matrix_tsv
+        path("PeakTFmotifHits/TFmotif_hitsMatrix_diff.tsv"), emit: hits_matrix_diff_tsv
+        path("MonaLisa"), emit: MonaLisaBinnedMotifEnrichment
 
     script:
     """
