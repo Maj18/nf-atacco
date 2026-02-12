@@ -14,10 +14,10 @@ process MONALISA {
         file(pfm_file)
 
     output:
-        path("PeakTFmotifHits/TFmotif_hits_list_allPeaks.RDS"), emit: hits_list_rds
-        path("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.RDS"), emit: hits_matrix_rds
-        path("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.tsv"), emit: hits_matrix_tsv
-        path("PeakTFmotifHits/TFmotif_hitsMatrix_diff.tsv"), emit: hits_matrix_diff_tsv
+        // path("PeakTFmotifHits/TFmotif_hits_list_allPeaks.RDS"), emit: hits_list_rds
+        // path("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.RDS"), emit: hits_matrix_rds
+        // path("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.tsv"), emit: hits_matrix_tsv
+        // path("PeakTFmotifHits/TFmotif_hitsMatrix_diff.tsv"), emit: hits_matrix_diff_tsv
         path("MonaLisa"), emit: MonaLisaBinnedMotifEnrichment
 
     script:

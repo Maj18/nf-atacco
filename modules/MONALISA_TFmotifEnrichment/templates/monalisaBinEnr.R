@@ -141,8 +141,7 @@ runBinnedMotifEnr = function(gr, pfm_file, outdir) {
         paste0(outdir, "/data/monalisa_input_seqs_bins_pwm.RDS"))
 
     print("----Run binned enrichment")
-    ## motif enrichment using 4 cores
-    # library(BiocParallel)
+    ## motif enrichment 
     bp = SnowParam(workers = coreNum, type = "SOCK", 
         exportglobals = TRUE, timeout = 7200)
     # bp = BiocParallel::MulticoreParam(1)
@@ -173,8 +172,6 @@ runBinnedMotifEnr = function(gr, pfm_file, outdir) {
             file = paste0(outdir, "/result_files/binnedEnr_assay_", assay_name, ".csv"),
             row.names = TRUE)
     }
-    # assays(se)
-    # head(assays(se)$log2enr)
     return(se)
 }
 
@@ -213,85 +210,6 @@ visualizeEnrichment = function(se, outdir) {
         width.seqlogo = 1.2))
 dev.off()
 }
-
-getTFmotifHits = function(peakannotation, pfm_file, difftables) {
-    # peakannotation = readr::read_tsv(peakAnnotation)
-    pfm = readJASPARMatrix(pfm_file, matrixClass=c("PFM"))
-    pwm = toPWM(pfm)
-    names(pwm) = ID(pwm)
-    bp = SnowParam(workers = coreNum, type = "SOCK", 
-                    exportglobals = TRUE, timeout = 7200)
-    seqs = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38,
-               names = peakannotation$seqnames,
-               start = peakannotation$start,
-               end = peakannotation$end)
-    names(seqs) = peakannotation$Geneid
-    hits = findMotifHits(query = pwm,
-                      subject = seqs,
-                      min.score = 10.0,
-                      method = "matchPWM",
-                      BPPARAM = bp)
-    # Clean up
-    bpstop(bp)
-    closeAllConnections()
-    gc()
-    # on.exit({
-    #     bpstop(bp)
-    #     closeAllConnections()
-    #     gc()
-    # }, add = TRUE)
-    # hits = bplapply(1:nrow(peakannotation), function(i, pwm_local) {
-    #     seq = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38, 
-    #         peakannotation[i, "seqnames", drop=TRUE], 
-    #         start=peakannotation[i, "start", drop=TRUE], 
-    #         end=peakannotation[i, "end", drop=TRUE])
-    #     seq_set = DNAStringSet(seq)
-    #     names(seq_set) = peakannotation[i, "Geneid", drop=TRUE]
-    #     hit = findMotifHits(query = pwm_local,
-    #         subject = seq_set,
-    #         min.score = 10.0,
-    #         method = "matchPWM",
-    #         BPPARAM = bp)
-    #     hit
-    # }, BPPARAM = bp, pwm_local=pwm) 
-    dir.create("PeakTFmotifHits/", recursive=TRUE, showWarnings=FALSE)
-    saveRDS(hits, paste0("PeakTFmotifHits/TFmotif_hits_list_allPeaks.RDS"))
-    combined_hits = do.call(c, hits)
-    rm(hits)
-    gc()
-    # we can summarize the number of predicted hits per promoter in matrix format
-    hitsMatrix = table(
-        factor(seqnames(combined_hits), levels = unique(peakannotation$Geneid)),
-        factor(combined_hits$pwmname, levels = unique(name(pwm)))) 
-    hitsMatrix_dat = hitsMatrix %>% as.data.frame.matrix() %>% 
-        tibble::rownames_to_column(var="peakID") 
-    rm(hitsMatrix)
-    gc()
-    saveRDS(hitsMatrix_dat, paste0("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.RDS"))
-    write.table(hitsMatrix_dat, 
-        file = paste0("PeakTFmotifHits/TFmotif_hitsMatrix_allPeaks.tsv"), 
-        sep = "\t", row.names = FALSE, quote = FALSE)
-
-    lapply(difftables, function(difftable) {
-        dat = hitsMatrix_dat %>%
-            dplyr::right_join(read.table(difftable) %>% 
-                tibble::rownames_to_column(var="peakID") %>%
-                select(-c(Chr, Start, End)) %>%
-                dplyr::left_join(peakannotation %>% 
-                mutate(peakID=Geneid) %>%
-                dplyr::select(-Geneid)) %>% na.omit() %>%
-                arrange(., pvalue))
-        outdir = paste0("PeakTFmotifHits/", 
-                    gsub(".tsv$", "", basename(difftable)))
-        dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
-        write.table(dat, 
-            file = paste0(outdir, "/TFmotif_hitsMatrix_diff.tsv"),
-            sep = "\t", row.names = FALSE, quote = FALSE)
-    })
-}
-
-
-
 
 suppressPackageStartupMessages({
 library(monaLisa)
@@ -347,47 +265,6 @@ lapply(difftables, function(difftable) {
     visualizeEnrichment(se, outdir)
 })
 
-# Get and save TF motif hits for all peaks
-print("Get TF motif hits for all peaks...")
-getTFmotifHits(peakannotation, pfm_file, difftables)
 
-# ls_obj_info()
-
-# print("Binned k-mer enrichment analysis...")
-# print("----Calculating k-mer enrichment...")
-# seKmer = calcBinnedKmerEnr(seqs = seqs,
-#     bins = bins,
-#     kmerLen = 6,
-#     includeRevComp = TRUE,
-#     BPPARAM = bp)
-# print("----Select the most enriched kmers (negLog10Padj>4)...")
-# selKmer = apply(assay(seKmer, "negLog10Padj"), 1
-#     function(x) max(abs(x), 0, na.rm = TRUE)) > 4.0
-# sum(selKmer)
-# seKmerSel = seKmer[selKmer, ]
-# print("----Calculate similarity between enriched kmers and enriched motifs...")
-# pfmSel = rowData(seSel)$motif.pfm
-# sims = motifKmerSimilarity(
-#     x=pfmSel, kmers=rownames(seKmerSel), 
-#     includeRevComp=TRUE)
-# dim(sims)
-# print("----Plot heatmap of similarity between selected motifs and enriched k-mers...")
-# maxwidth = max(sapply(TFBSTools::Matrix(pfmSel), ncol))
-# seqlogoGrobs = lapply(pfmSel, seqLogoGrob, xmax = maxwidth)
-# hmSeqlogo = rowAnnotation(logo=annoSeqlogo(seqlogoGrobs, which="row"),
-#     annotation_width = unit(1.5, "inch"),
-#     show_annotation_name = FALSE)
-# pdf(paste0(outdir,"/Kmer_Motif_SimilarityHeatmap.pdf"), 
-#     w=3+dim(sims)[2]/8, h=2+dim(sims)[1]/8)
-# Heatmap(sims, show_row_names=TRUE, row_names_gp=gpar(fontsize=8),
-#     show_column_names=TRUE, column_names_gp=gpar(fontsize=8),
-#     name="Similarity", 
-#     column_title="Selected TFs and enriched k-mers",
-#     right_annotation=hmSeqlogo)
-# dev.off()
-
-out = capture.output({sessionInfo()})
+out = capture.output(sessionInfo())
 writeLines(out, paste0(out_dir,"/Monalisa_sessionInfo.txt"))
-
-
-
