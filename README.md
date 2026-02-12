@@ -268,7 +268,7 @@ Or in text format:
 
 ```
 Yuan Li (2026). nf-atacco: A Nextflow pipeline for transcription factor inference by integrating ATAC-seq and RNA-seq data. 
-Nextflow pipeline version 1.0.0. https://doi.org/10.5281/zenodo.18616144
+Nextflow pipeline version 1.0.3. https://doi.org/10.5281/zenodo.18616144
 ```
 
 ## Acknowledgments
