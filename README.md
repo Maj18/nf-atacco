@@ -1,6 +1,6 @@
 # nf-atacco
 
- ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue)  ![Version](https://img.shields.io/badge/Version-1.0.0-green)  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18615953.svg)](https://doi.org/10.5281/zenodo.18615953)
+ ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue)  ![Version](https://img.shields.io/badge/Version-1.0.0-green)  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18616144.svg)](https://doi.org/10.5281/zenodo.18616144)
 
 # Workflow
 ![workflow](./doc/images/nf-atacco_workflow.png)
@@ -248,6 +248,28 @@ The pipeline generates the following outputs:
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request.
+
+## Citation
+
+If you use parseMetab in your research, please cite:
+
+```bibtex
+@software{li2026nf-atacco,
+  author = {Li, Yuan},
+  title = {nf-atacco: A Nextflow pipeline for transcription factor inference by integrating ATAC-seq and RNA-seq data},
+  year = {2026},
+  version = {1.0.3},
+  url = {https://github.com/Maj18/nf-atacco},
+  doi = {10.5281/zenodo.18616144}
+}
+```
+
+Or in text format:
+
+```
+Yuan Li (2026). parseMetab: Metabolic activity inference and analysis for omics data. 
+R package version 1.0.0. https://doi.org/10.5281/zenodo.18616144
+```
 
 ## Acknowledgments
 
