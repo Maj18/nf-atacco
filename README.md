@@ -267,8 +267,8 @@ If you use parseMetab in your research, please cite:
 Or in text format:
 
 ```
-Yuan Li (2026). parseMetab: Metabolic activity inference and analysis for omics data. 
-R package version 1.0.0. https://doi.org/10.5281/zenodo.18616144
+Yuan Li (2026). nf-atacco: A Nextflow pipeline for transcription factor inference by integrating ATAC-seq and RNA-seq data. 
+Nextflow pipeline version 1.0.0. https://doi.org/10.5281/zenodo.18616144
 ```
 
 ## Acknowledgments
