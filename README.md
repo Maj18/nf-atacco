@@ -1,6 +1,6 @@
 # nf-atacco
 
-| ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue) | ![Version](https://img.shields.io/badge/Version-1.0.0-green) |
+| ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue) | ![Version](https://img.shields.io/badge/Version-1.0.0-green) | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18615953.svg)](https://doi.org/10.5281/zenodo.18615953)
 |------------------------------------------------------------------|-------------------------------------------------------------|
 
 # Workflow
