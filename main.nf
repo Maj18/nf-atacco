@@ -137,6 +137,7 @@ workflow ENTRY_MONALISA {
     }
     ch_difftable = Channel.value(params.difftables)
     ch_peakAnnotation = Channel.fromPath(params.peakAnnotation)
+    ch_selectedPeaks = Channel.value(params.selectedPeaks)
     ch_peakAnnotation.view()
     if ( !params.pfm_file ) {
         ch_pfm_file = Channel.fromPath("${projectDir}/data/JASPAR2024_CORE_vertebrates_non-redundant_pfms_jaspar.txt")
@@ -144,7 +145,7 @@ workflow ENTRY_MONALISA {
         ch_pfm_file = Channel.fromPath(params.pfm_file)
     }
     ch_pfm_file.view()
-    TFmotifEnrichment(ch_difftable, ch_peakAnnotation, ch_pfm_file)
+    TFmotifEnrichment(ch_difftable, ch_peakAnnotation, ch_selectedPeaks, ch_pfm_file)
 }
 
 workflow ENTRY_DIFFTFACTIVITY {

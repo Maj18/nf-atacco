@@ -5,7 +5,8 @@
 args = commandArgs(trailingOnly = TRUE)
 difftables = args[1] # ; separated if multiple files
 peakAnnotation = args[2]
-pfm_file = args[3]
+selectedPeaks = args[3] # comma separated if multiple peaks, e.g. "genrich_12345,genrich_67890"
+pfm_file = args[4]
 coreNum = args[5]
 
 # singularity shell  /proj/nobackup/sens2025644/wharf/ekolyal/ekolyal-sens2025644/nf-atacco/conts/bioconductor-biocparallel_bioconductor-bsgenome.hsapiens.ucsc.hg38_bioconductor-complexheatmap_bioconductor-genomicranges_pruned_55fb052e06404cfb.sif
@@ -38,7 +39,7 @@ getTFmotifHits = function(peakannotation, pfm_file, difftables) {
     pfm = readJASPARMatrix(pfm_file, matrixClass=c("PFM"))
     pwm = toPWM(pfm)
     names(pwm) = ID(pwm)
-    bp = SnowParam(workers = as.numeric(coreNum)*2, type = "SOCK", 
+    bp = SnowParam(workers = coreNum, type = "SOCK", 
                     exportglobals = TRUE, timeout = 7200)
     print("Now this version of peak annotation is 0-based coordinate, but getSeq requires 1-based coordinate, so we need to convert the data while running getSeq")
     # seqs = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38,
@@ -60,7 +61,7 @@ getTFmotifHits = function(peakannotation, pfm_file, difftables) {
     hits = bplapply(1:nrow(peakannotation), function(i, pwm_local) {
         seq = getSeq(BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38, 
             peakannotation[i, "seqnames", drop=TRUE], 
-            start=peakannotation[i, "start", drop=TRUE] + 1,
+            start=peakannotation[i, "start", drop=TRUE] + 1, # 0 to 1-based coordinate conversion
             end=peakannotation[i, "end", drop=TRUE])
         seq_set = DNAStringSet(seq)
         names(seq_set) = peakannotation[i, "Geneid", drop=TRUE]
@@ -103,11 +104,11 @@ getTFmotifHits = function(peakannotation, pfm_file, difftables) {
                 mutate(peakID=Geneid) %>%
                 dplyr::select(-Geneid)) %>% na.omit() %>%
                 arrange(., pvalue))
-        outdir = paste0("PeakTFmotifHits/", 
-                    gsub(".tsv$", "", basename(difftable)))
+        outdir = "PeakTFmotifHits/TFmotif_hitsMatrix_diff/"
         dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+        suffix = gsub(".tsv$", "", basename(difftable))
         write.table(dat, 
-            file = paste0(outdir, "/TFmotif_hitsMatrix_diff.tsv"),
+            file = paste0(outdir, "/TFmotif_hitsMatrix_diff_",suffix,".tsv"),
             sep = "\t", row.names = FALSE, quote = FALSE)
     })
 }
@@ -137,6 +138,8 @@ library(tibble)
 print("Loading peak annotation...")
 print(peakAnnotation)
 peakannotation = readr::read_tsv(peakAnnotation)
+selectedPeaks_vec = strsplit(selectedPeaks, ",")[[1]]
+peakannotation = peakannotation %>% filter(Geneid %in% selectedPeaks_vec)
 
 print("----Please be aware that Monalia requires 0-based peak coordinate!!!")
 difftables = strsplit(difftables, ";")[[1]]
@@ -146,7 +149,5 @@ print("Get TF motif hits for all peaks...")
 getTFmotifHits(peakannotation, pfm_file, difftables)
 
 out = capture.output({sessionInfo()})
-writeLines(out, paste0("/PeakTFmotifHits/Monalisa_sessionInfo.txt"))
-
-
+writeLines(out, paste0("PeakTFmotifHits/Monalisa_sessionInfo.txt"))
 
