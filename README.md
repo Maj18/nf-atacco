@@ -1,6 +1,6 @@
 # nf-atacco
 
- ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue)  ![Version](https://img.shields.io/badge/Version-1.0.0-green)  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18616144.svg)](https://doi.org/10.5281/zenodo.18616144)
+ ![Workflow](https://img.shields.io/badge/Workflow-Nextflow-blue)  ![Version](https://img.shields.io/badge/Version-1.0.0-green)  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18638449.svg)](https://doi.org/10.5281/zenodo.18638449)
 
 # Workflow
 ![workflow](./doc/images/nf-atacco_workflow.png)
@@ -268,7 +268,7 @@ Or in text format:
 
 ```
 Yuan Li (2026). nf-atacco: A Nextflow pipeline for transcription factor inference by integrating ATAC-seq and RNA-seq data. 
-Nextflow pipeline version 1.0.3. https://doi.org/10.5281/zenodo.18616144
+Nextflow pipeline version 1.0.4. https://doi.org/10.5281/zenodo.18638449
 ```
 
 ## Acknowledgments
