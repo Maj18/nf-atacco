@@ -249,6 +249,10 @@ The pipeline generates the following outputs:
 
 Contributions are welcome! Please fork the repository and submit a pull request.
 
+## License
+
+This project is licensed under the GPL (>= 3) License. See [DESCRIPTION](DESCRIPTION) for details.
+
 ## Citation
 
 If you use parseMetab in your research, please cite:
