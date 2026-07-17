@@ -271,6 +271,11 @@ Yuan Li (2026). nf-atacco: A Nextflow pipeline for transcription factor inferenc
 Nextflow pipeline version 1.0.4. https://doi.org/10.5281/zenodo.18638449
 ```
 
+## Developer
+Yuan Li (uncork-shady-next@duck.com), 
+NBIS, 
+Department of Immunetechnology, Lund university
+
 ## Acknowledgments
 
 - Built with [Nextflow](https://www.nextflow.io/)
